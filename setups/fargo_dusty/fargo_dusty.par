@@ -18,9 +18,7 @@ Epsilon1                1.0     Dust-to-gas mass ratio for dust1
 Epsilon2                1.0     Dust-to-gas mass ratio for dust2
 Epsilon3                1.0     Dust-to-gas mass ratio for dust3
 
-Feedback1		YES	Gas feels feedback from dust1
-Feedback2		YES	Gas feels feedback from dust2
-Feedback3		YES	Gas feels feedback from dust3
+GasFeelsDustDrag	YES	Gas feels drag from all dust species
 
 ### Planet parameters
 
