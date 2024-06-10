@@ -1,6 +1,6 @@
 #include "fargo3d.h"
 
-void _CondInit() {
+void _CondInit(real epsilon) {
   
   int i,j,k;
   real r, omega;
@@ -22,7 +22,7 @@ void _CondInit() {
 	r     = Ymed(j);
 	omega = sqrt(G*MSTAR/r/r/r);                       //Keplerian frequency
 	rhog  = SIGMA0*pow(r/R0,-SIGMASLOPE);              //Gas surface density
-        rhod  = rhog*EPSILON;                              //Dust surface density
+        rhod  = rhog*epsilon;                              //Dust surface density
 
 	if (Fluidtype == GAS) {
 	  rho[l]   = rhog;
@@ -47,9 +47,11 @@ void _CondInit() {
 }
 
 void CondInit() {
+  float InvStokes[NFLUIDS] = { 0.0, INVSTOKES1, INVSTOKES2, INVSTOKES3 };
+  float Epsilons[NFLUIDS] = { 1.0, EPSILON1, EPSILON2, EPSILON3 };
+  int Feedbacks[NFLUIDS] = { NO, FEEDBACK1, FEEDBACK2, FEEDBACK3 };
   
   int id_gas = 0;
-  int feedback = YES;
   //We first create the gaseous fluid and store it in the array Fluids[]
   Fluids[id_gas] = CreateFluid("gas",GAS);
 
@@ -57,7 +59,7 @@ void CondInit() {
   SelectFluid(id_gas);
 
   //and fill its fields
-  _CondInit();
+  _CondInit(Epsilons[id_gas]);
 
   //We repeat the process for the dust fluids
   char dust_name[MAXNAMELENGTH];
@@ -66,18 +68,17 @@ void CondInit() {
   for(id_dust = 1; id_dust<NFLUIDS; id_dust++) {
     sprintf(dust_name,"dust%d",id_dust); //We assign different names to the dust fluids
 
-    Fluids[id_dust]  = CreateFluid(dust_name, DUST);
+    Fluids[id_dust] = CreateFluid(dust_name, DUST);
     SelectFluid(id_dust);
-    _CondInit();
+    _CondInit(Epsilons[id_dust]);
 
-  }
-
-  /*We now fill the collision matrix (Feedback from dust included)
-   Note: ColRate() moves the collision matrix to the device.
-   If feedback=NO, gas does not feel the drag force.*/
+    /*We now fill the collision matrix (Feedback from dust included)
+     Note: ColRate() moves the collision matrix to the device.
+     If feedback=NO, gas does not feel the drag force.*/
   
-  ColRate(INVSTOKES1, id_gas, 1, feedback);
-  ColRate(INVSTOKES2, id_gas, 2, feedback);
-  ColRate(INVSTOKES3, id_gas, 3, feedback);
-
+    // Normalise the inverse stokes parameter to be in units of
+    // the initial gas density at R=R0.  This will then be used to
+    // rescale to the current cell gas density in collision_kernel.h
+    ColRate(InvStokes[id_dust]/SIGMA0, id_gas, 1, Feedbacks[id_dust]);
+  }
 }

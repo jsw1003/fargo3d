@@ -13,7 +13,7 @@
 
 idm = lxm*id1 + lym*id2 + lzm*id3;
 
-#ifdef STOKESNUMBER
+#if defined(STOKESNUMBER) || defined(RESCALEDSTOKESNUMBER)
 omega = (id1+id3)*sqrt(G*MSTAR/(ymed(j)*ymed(j)*ymed(j))) +
   id2*sqrt(G*MSTAR/(ymin(j)*ymin(j)*ymin(j)));
 #endif
@@ -29,6 +29,12 @@ omega = 1.0;
 
 // In the implementation below, alpha --> 1/St
 
+#ifdef RESCALEDSTOKESNUMBER
+  const real rescale_alpha = rho[0][l];
+#elif defined(STOKESNUMBER) || defined(CONSTANTSTOKESNUMBER)
+  const real rescale_alpha = 1.0;
+#endif
+
 for (o=0; o<NFLUIDS; o++) {
   for (p=0; p<NFLUIDS; p++) {
     
@@ -43,9 +49,9 @@ for (o=0; o<NFLUIDS; o++) {
 	 alpha[o+p*NFLUIDS], however, we use alpha[p+o*NFLUIDS] to
 	 have the possibility of disabling feedback if necessary.*/      
       
-#if defined(STOKESNUMBER) || defined(CONSTANTSTOKESNUMBER)
-      if ( p > o )  m[p+o*NFLUIDS] = -dt*omega*alpha[p+o*NFLUIDS]*rho_p/rho_o;
-      else          m[p+o*NFLUIDS] = -dt*omega*alpha[p+o*NFLUIDS];
+#if defined(STOKESNUMBER) || defined(CONSTANTSTOKESNUMBER) || defined(RESCALEDSTOKESNUMBER)
+      if ( p > o )  m[p+o*NFLUIDS] = -dt*omega*alpha[p+o*NFLUIDS]*rescale_alpha*rho_p/rho_o;
+      else          m[p+o*NFLUIDS] = -dt*omega*alpha[p+o*NFLUIDS]*rescale_alpha;
 #endif
 #ifdef CONSTANTDRAG
       m[p+o*NFLUIDS] = -dt*alpha[p+o*NFLUIDS]/rho_o;
@@ -66,14 +72,14 @@ for (o=0; o<NFLUIDS; o++) {
 	  
 	  rho_q  = 0.5*(rho[q][l] + rho[q][idm]);
 	  
-#if defined(STOKESNUMBER) || defined(CONSTANTSTOKESNUMBER)
+#if defined(STOKESNUMBER) || defined(CONSTANTSTOKESNUMBER) || defined(RESCALEDSTOKESNUMBER)
 	  
 	  /* In the line below, the collision term should be
 	     alpha[p+q*NFLUIDS], however, we use alpha[q+p*NFLUIDS] to
 	     have the possibility of disabling feedback if necessary.*/
 	  
-	  if( q > p ) sum += alpha[q+p*NFLUIDS]*rho_q/rho_p;
-	  else        sum += alpha[q+p*NFLUIDS];
+	  if( q > p ) sum += alpha[q+p*NFLUIDS]*rescale_alpha*rho_q/rho_p;
+	  else        sum += alpha[q+p*NFLUIDS]*rescale_alpha;
 #endif
 #ifdef CONSTANTDRAG
 	  sum += alpha[q+p*NFLUIDS];
@@ -81,7 +87,7 @@ for (o=0; o<NFLUIDS; o++) {
 	}
       }
       
-#if defined(STOKESNUMBER) || defined(CONSTANTSTOKESNUMBER)
+#if defined(STOKESNUMBER) || defined(CONSTANTSTOKESNUMBER) || defined(RESCALEDSTOKESNUMBER)
       m[p+p*NFLUIDS] = 1.0 + dt*omega*sum; //The factors were not present in the sum (see **)
 #endif
       
