@@ -47,8 +47,8 @@ void _CondInit(real epsilon) {
 }
 
 void CondInit() {
-  float InvStokes[NFLUIDS] = { 0.0, INVSTOKES1, INVSTOKES2, INVSTOKES3 };
-  float Epsilons[NFLUIDS] = { 1.0, EPSILON1, EPSILON2, EPSILON3 };
+  real InvStokes[NFLUIDS] = { 0.0, INVSTOKES1, INVSTOKES2, INVSTOKES3 };
+  real Epsilons[NFLUIDS] = { 1.0, EPSILON1, EPSILON2, EPSILON3 };
   
   int id_gas = 0;
   //We first create the gaseous fluid and store it in the array Fluids[]
@@ -78,6 +78,6 @@ void CondInit() {
     // Normalise the inverse stokes parameter to be in units of
     // the initial gas density at R=R0.  This will then be used to
     // rescale to the current cell gas density in collision_kernel.h
-    ColRate(InvStokes[id_dust]/SIGMA0, id_gas, 1, GASFEELSDUSTDRAG);
+    ColRate(InvStokes[id_dust]/SIGMA0, id_gas, id_dust, GASFEELSDUSTDRAG);
   }
 }
